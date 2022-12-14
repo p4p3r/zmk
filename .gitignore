@@ -5,5 +5,7 @@
 /zephyr
 /zmk-config
 /build
+.venv
 *.DS_Store
 __pycache__
+

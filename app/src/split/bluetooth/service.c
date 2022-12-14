@@ -18,13 +18,12 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 #include <drivers/behavior.h>
 #include <zmk/behavior.h>
 #include <zmk/matrix.h>
+
+#include <zmk/split/common.h>
 #include <zmk/split/bluetooth/uuid.h>
 #include <zmk/split/bluetooth/service.h>
 
-#define POS_STATE_LEN 16
-
 static uint8_t num_of_positions = ZMK_KEYMAP_LEN;
-static uint8_t position_state[POS_STATE_LEN];
 
 static struct zmk_split_run_behavior_payload behavior_run_payload;
 
@@ -104,11 +103,11 @@ K_THREAD_STACK_DEFINE(service_q_stack, CONFIG_ZMK_SPLIT_BLE_PERIPHERAL_STACK_SIZ
 
 struct k_work_q service_work_q;
 
-K_MSGQ_DEFINE(position_state_msgq, sizeof(char[POS_STATE_LEN]),
+K_MSGQ_DEFINE(position_state_msgq, sizeof(char[SPLIT_DATA_LEN]),
               CONFIG_ZMK_SPLIT_BLE_PERIPHERAL_POSITION_QUEUE_SIZE, 4);
 
 void send_position_state_callback(struct k_work *work) {
-    uint8_t state[POS_STATE_LEN];
+    uint8_t state[SPLIT_DATA_LEN];
 
     while (k_msgq_get(&position_state_msgq, &state, K_NO_WAIT) == 0) {
         int err = bt_gatt_notify(NULL, &split_svc.attrs[1], &state, sizeof(state));
@@ -126,7 +125,7 @@ int send_position_state() {
         switch (err) {
         case -EAGAIN: {
             LOG_WRN("Position state message queue full, popping first message and queueing again");
-            uint8_t discarded_state[POS_STATE_LEN];
+            uint8_t discarded_state[SPLIT_DATA_LEN];
             k_msgq_get(&position_state_msgq, &discarded_state, K_NO_WAIT);
             return send_position_state();
         }
@@ -139,16 +138,6 @@ int send_position_state() {
     k_work_submit_to_queue(&service_work_q, &service_position_notify_work);
 
     return 0;
-}
-
-int zmk_split_bt_position_pressed(uint8_t position) {
-    WRITE_BIT(position_state[position / 8], position % 8, true);
-    return send_position_state();
-}
-
-int zmk_split_bt_position_released(uint8_t position) {
-    WRITE_BIT(position_state[position / 8], position % 8, false);
-    return send_position_state();
 }
 
 int service_init(const struct device *_arg) {

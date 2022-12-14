@@ -27,5 +27,12 @@
 / {
 	chosen {
 		zmk,underglow = &led_strip;
+		zmk,split-serial = &uart0;
 	};
 };
+
+&uart0 {
+  status = "okay";
+	current-speed = <115200>;
+};
+

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2020 The ZMK Contributors
+ * Copyright (c) 2022 The ZMK Contributors
  *
  * SPDX-License-Identifier: MIT
  */
@@ -20,5 +20,5 @@ struct zmk_split_run_behavior_payload {
     char behavior_dev[ZMK_SPLIT_RUN_BEHAVIOR_DEV_LEN];
 } __packed;
 
-int zmk_split_bt_position_pressed(uint8_t position);
-int zmk_split_bt_position_released(uint8_t position);
+int send_position_state();
+
